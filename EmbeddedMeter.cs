@@ -34,6 +34,7 @@ namespace WindowsUsageWidget
         [DllImport("gdi32.dll")] static extern bool DeleteDC(IntPtr dc);
         [DllImport("user32.dll",SetLastError=true)] static extern bool UpdateLayeredWindow(IntPtr window,IntPtr destinationDC,IntPtr position,ref BitmapSize size,IntPtr sourceDC,ref Point source,uint color,ref Blend blend,uint flags);
         IntPtr taskbar;
+        public static int ClampTaskbarPosition(int anchor,int offset,double scale,int available) { return Math.Max(0,Math.Min(Math.Max(0,available),anchor+(int)(offset*scale))); }
         Preferences preferences;
         Snapshot snapshot;
         bool stale;
@@ -70,8 +71,6 @@ namespace WindowsUsageWidget
         {
             snapshot=data;preferences=p;stale=expired;
             var description=TaskbarDisplay.From(data,p,expired,data==null).Description;
-            var labels=(p.TaskbarLabel(false)+" / "+p.TaskbarLabel(true)).Trim(' ','/');
-            if(labels.Length>0)description=labels+Environment.NewLine+description;
             if(description!=lastTip) { tooltip.SetToolTip(this,description);lastTip=description; }
             if(DockToTaskbar())RenderSurface();
         }
@@ -80,6 +79,38 @@ namespace WindowsUsageWidget
             var parent=FindWindow("Shell_TrayWnd",null);if(parent==IntPtr.Zero) { Hide();return false; }
             IntPtr previous=IntPtr.Zero;
             try { previous=SetThreadDpiAwarenessContext(GetWindowDpiAwarenessContext(parent));return DockCore(parent); }
+            finally { if(previous!=IntPtr.Zero)SetThreadDpiAwarenessContext(previous); }
+        }
+        public static int MeterPixelHeight(Preferences p,double scale,int taskbarHeight)
+        {
+            return Math.Max(1,Math.Min(Math.Max(1,taskbarHeight-4),(int)Math.Round(p.TaskbarMeterHeight*scale)));
+        }
+        public static int PreviewTaskbarPixelHeight(double previewScale)
+        {
+            var parent=FindWindow("Shell_TrayWnd",null);IntPtr previous=IntPtr.Zero;
+            try
+            {
+                if(parent!=IntPtr.Zero)
+                {
+                    previous=SetThreadDpiAwarenessContext(GetWindowDpiAwarenessContext(parent));Rect rect;
+                    if(GetWindowRect(parent,out rect)) { var taskbarScale=Math.Max(96,GetDpiForWindow(parent))/96.0;return Math.Max(1,(int)Math.Round((rect.Bottom-rect.Top)/taskbarScale*previewScale)); }
+                }
+                return Math.Max(1,(int)Math.Round(48*previewScale));
+            }
+            finally { if(previous!=IntPtr.Zero)SetThreadDpiAwarenessContext(previous); }
+        }
+        public static int PreviewPixelHeight(Preferences p,double previewScale)
+        {
+            var parent=FindWindow("Shell_TrayWnd",null);IntPtr previous=IntPtr.Zero;
+            try
+            {
+                if(parent!=IntPtr.Zero)
+                {
+                    previous=SetThreadDpiAwarenessContext(GetWindowDpiAwarenessContext(parent));Rect rect;
+                    if(GetWindowRect(parent,out rect)) { var taskbarScale=Math.Max(96,GetDpiForWindow(parent))/96.0;return Math.Max(1,(int)Math.Round(MeterPixelHeight(p,taskbarScale,rect.Bottom-rect.Top)/taskbarScale*previewScale)); }
+                }
+                return Math.Max(1,(int)Math.Round(p.TaskbarMeterHeight*previewScale));
+            }
             finally { if(previous!=IntPtr.Zero)SetThreadDpiAwarenessContext(previous); }
         }
         bool DockCore(IntPtr parent)
@@ -95,12 +126,11 @@ namespace WindowsUsageWidget
                 SetParent(Handle,parent);
             }
             Rect bar;GetWindowRect(parent,out bar);scale=Math.Max(96,GetDpiForWindow(parent))/96.0;
-            int width=(int)Math.Round(preferences.TaskbarMeterWidth*scale),height=Math.Min(bar.Bottom-bar.Top-4,(int)Math.Round(42*scale));
+            int width=(int)Math.Round(preferences.TaskbarMeterWidth*scale),height=MeterPixelHeight(preferences,scale,bar.Bottom-bar.Top);
             int x;
             if(preferences.TaskbarSide=="Left")
             {
-                bool widgets=Convert.ToInt32(Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced","TaskbarDa",1))!=0;
-                x=(int)((widgets?150:8)*scale);
+                x=(int)(8*scale);
             }
             else
             {
@@ -108,7 +138,7 @@ namespace WindowsUsageWidget
                 var edge=tray!=IntPtr.Zero&&GetWindowRect(tray,out trayRect)?trayRect.Left-bar.Left:bar.Right-bar.Left-(int)(300*scale);
                 x=edge-width-(int)(8*scale);
             }
-            x=Math.Max(0,Math.Min(bar.Right-bar.Left-width,x+(int)(preferences.TaskbarOffset*scale)));
+            x=ClampTaskbarPosition(x,preferences.TaskbarOffset,scale,bar.Right-bar.Left-width);
             var y=Math.Max(0,(bar.Bottom-bar.Top-height)/2);
             if(changedParent||lastX!=x||lastY!=y||lastWidth!=width||lastHeight!=height)
             {

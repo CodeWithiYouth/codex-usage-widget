@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -26,12 +26,18 @@ namespace WindowsUsageWidget
             var amount=p.ShowUsed?chosen.Used:chosen.Remaining;
             display.Value=Math.Max(0,Math.Min(1,amount/100));
             display.Badge=amount.ToString("0",CultureInfo.InvariantCulture)+"%";
-            display.State=stale?TaskbarItemProgressState.Error:chosen.Remaining<=p.WarningPercent?TaskbarItemProgressState.Paused:TaskbarItemProgressState.Normal;
-            display.Description="Codex · "+chosen.Label+mode+" "+amount.ToString("0.#")+"%"+(stale?" · 数据已过期":"")+"\n";
-            if(snapshot.Primary!=null)display.Description+=snapshot.Primary.Label+"剩余 "+snapshot.Primary.Remaining.ToString("0.#")+"% · "+snapshot.Primary.Countdown()+"\n";
-            if(snapshot.Secondary!=null)display.Description+=snapshot.Secondary.Label+"剩余 "+snapshot.Secondary.Remaining.ToString("0.#")+"% · "+snapshot.Secondary.Countdown()+"\n";
+            display.State=stale?TaskbarItemProgressState.Error:chosen.Remaining<=p.LowThreshold(p.TaskbarQuota=="Secondary")?TaskbarItemProgressState.Paused:TaskbarItemProgressState.Normal;
+            display.Description="Codex · "+mode+(stale?" · 数据已过期":"")+"\n";
+            if(snapshot.Primary!=null)display.Description+=QuotaDescription(snapshot.Primary,p)+"\n";
+            if(snapshot.Secondary!=null)display.Description+=QuotaDescription(snapshot.Secondary,p)+"\n";
             display.Description+="最后更新 "+snapshot.Received.ToString("HH:mm:ss");
             return display;
+        }
+        static string QuotaDescription(Limit value,Preferences p)
+        {
+            var amount=p.ShowUsed?value.Used:value.Remaining;var now=(long)(DateTime.UtcNow-new DateTime(1970,1,1)).TotalSeconds;
+            var reset=value.Reset<=0?"重置时间未知":value.Reset<=now?"等待服务端更新":value.ResetDisplay("Weekday")+" 重置";
+            return value.Label+"："+amount.ToString("0.#")+"% · "+reset;
         }
         public ImageSource MakeIcon()
         {
@@ -40,7 +46,7 @@ namespace WindowsUsageWidget
             using(var dc=visual.RenderOpen())
             {
                 dc.DrawRoundedRectangle(new SolidColorBrush(color),null,new Rect(0,0,32,32),6,6);
-                var text=new FormattedText(Badge,CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(new FontFamily("Segoe UI"),FontStyles.Normal,FontWeights.SemiBold,FontStretches.Normal),Badge.Length>3?12:15,Brushes.White,1.0);
+                var text=new FormattedText(Badge,CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(new FontFamily(UI.TextFontFamily),FontStyles.Normal,FontWeights.SemiBold,FontStretches.Normal),Badge.Length>3?12:15,Brushes.White,1.0);
                 dc.DrawText(text,new Point((32-text.WidthIncludingTrailingWhitespace)/2,(29-text.Height)/2));
                 dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(90,255,255,255)),null,new Rect(3,27,26,2),1,1);
                 if(Value>0)dc.DrawRoundedRectangle(Brushes.White,null,new Rect(3,27,26*Value,2),1,1);
