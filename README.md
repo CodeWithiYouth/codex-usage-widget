@@ -1,5 +1,7 @@
 # Codex Usage Widget
 
+当前源码版本：**3.0.0** · [更新记录](CHANGELOG.md)
+
 一个轻量的 Windows 任务栏 Codex 用量组件。通过本机已登录的 Codex 后台程序读取账号额度，显示 **5 小时**和**每周**用量、进度及重置时间。
 
 [下载 Release](https://github.com/CodeWithiYouth/codex-usage-widget/releases/latest)
@@ -168,10 +170,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 本地打包：
 
 ```powershell
-.\package.ps1 -Version v1.0.0
+.\package.ps1
+# 也可显式指定，须与已编译 EXE 的版本一致
+.\package.ps1 -Version v3.0.0
 ```
 
-先构建再打包，文件生成于 `dist\release\`，包括独立 EXE、带说明与启动脚本的便携 ZIP 和 `SHA256SUMS.txt`。
+先构建再打包，默认从 EXE 读取版本，文件生成于 `dist\release\v3.0.0\`，包括独立 EXE、带版本号的便携 ZIP、说明、截图和 `SHA256SUMS.txt`。打包时会检查源码与 EXE 版本一致，避免旧程序被标记成新版本。
+
+## 版本管理
+
+`AppVersion.cs` 是程序版本来源，当前为 `3.0.0`；程序集和文件版本为 `3.0.0.0`，产品版本为 `3.0.0`。设置窗口右上角显示 `v3.0.0`。升级版本时修改 `AppVersion.cs` 中的版本，并同步 `app.manifest`；构建脚本会验证两者一致。更新记录维护在 `CHANGELOG.md`。
 
 ## 验证
 
@@ -193,6 +201,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
 | 文件 | 职责 |
 | --- | --- |
+| `AppVersion.cs` | 统一程序版本常量 |
 | `Data.cs` | 配置、用量数据和 Codex 后台通信 |
 | `CliLocator.cs` | 查找可用的 Codex 后台程序 |
 | `MainWindow.cs` | 详细窗口、刷新和应用生命周期 |

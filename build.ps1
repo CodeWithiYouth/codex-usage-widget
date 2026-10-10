@@ -3,6 +3,12 @@ $ErrorActionPreference = 'Stop'
 $taskFramework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $taskCompiler = Join-Path $taskFramework 'csc.exe'
 if (-not (Test-Path -LiteralPath $taskCompiler)) { throw 'Windows .NET Framework C# compiler not found.' }
+$taskVersionSource = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'AppVersion.cs'))
+$taskVersionMatch = [regex]::Match($taskVersionSource, 'Number\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"')
+if (-not $taskVersionMatch.Success) { throw 'AppVersion.cs must define a valid application version.' }
+$taskExpectedVersion = $taskVersionMatch.Groups[1].Value
+$taskManifest = [xml][IO.File]::ReadAllText((Join-Path $PSScriptRoot 'app.manifest'))
+if ($taskManifest.assembly.assemblyIdentity.version -ne ($taskExpectedVersion + '.0')) { throw 'app.manifest version must match AppVersion.cs.' }
 $taskOutput = Join-Path $PSScriptRoot 'dist'
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
 $taskDestination = Join-Path $taskOutput 'CodexUsageWidget-Windows.exe'
@@ -11,4 +17,6 @@ $taskReferences += @('PresentationFramework.dll','PresentationCore.dll','Windows
 $taskSources = Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.cs' | Where-Object { $_.Name -ne 'AppearanceChecks.cs' } | Select-Object -ExpandProperty FullName
 & $taskCompiler /nologo /target:winexe /platform:x64 /optimize+ /utf8output ('/out:' + $taskDestination) ('/win32manifest:' + (Join-Path $PSScriptRoot 'app.manifest')) @taskReferences @taskSources
 if ($LASTEXITCODE -ne 0) { throw 'Widget build failed.' }
+ $taskBuiltInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($taskDestination)
+if ($taskBuiltInfo.ProductVersion -ne $taskExpectedVersion -or $taskBuiltInfo.FileVersion -ne ($taskExpectedVersion + '.0')) { throw 'Built EXE version does not match AppVersion.cs.' }
 Get-Item -LiteralPath $taskDestination | Select-Object Name,Length,FullName

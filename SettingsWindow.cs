@@ -11,10 +11,10 @@ namespace WindowsUsageWidget
         public event Action<Preferences> Saved;
         public SettingsWindow(Preferences original)
         {
-            Title="Codex · 参数设置";WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;Width=420;Height=Math.Min(670,SystemParameters.WorkArea.Height-24);WindowStartupLocation=WindowStartupLocation.CenterOwner;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
+            Title="Codex · 参数设置 · "+AppVersion.Display;WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;Width=420;Height=Math.Min(670,SystemParameters.WorkArea.Height-24);WindowStartupLocation=WindowStartupLocation.CenterOwner;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
             var draft=original.Copy();var root=new Grid();root.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });root.RowDefinitions.Add(new RowDefinition());root.Children.Add(UI.Chrome(this));
             var body=new Grid { Margin=new Thickness(12,6,4,12) };body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });body.RowDefinitions.Add(new RowDefinition());body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });
-            var title=UI.Text("参数设置",24);title.FontWeight=FontWeights.SemiBold;title.Margin=new Thickness(0,0,8,10);body.Children.Add(title);
+            var title=UI.Text("参数设置",24);title.FontWeight=FontWeights.SemiBold;var version=UI.Text(AppVersion.Display,12);version.Name="AppVersionLabel";version.Opacity=.65;var titleRow=UI.TwoColumns(title,version);titleRow.Margin=new Thickness(0,0,8,10);body.Children.Add(titleRow);
             var previewPanel=new StackPanel { Margin=new Thickness(0,0,8,8) };Grid.SetRow(previewPanel,1);body.Children.Add(previewPanel);
             var panel=new StackPanel { Margin=new Thickness(0,0,6,0) };var scroll=new ScrollViewer { Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Padding=new Thickness(0) };Grid.SetRow(scroll,2);body.Children.Add(scroll);
 

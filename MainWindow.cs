@@ -37,7 +37,7 @@ namespace WindowsUsageWidget
         Task cleanupTask;
         public MainWindow()
         {
-            Title="Codex 用量";WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
+            Title="Codex 用量 · "+AppVersion.Display;WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
             Width=preferences.Width;Height=preferences.Height;Topmost=preferences.AlwaysOnTop;
             ShowInTaskbar=false;
             TaskbarItemInfo=new TaskbarItemInfo();

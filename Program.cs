@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,7 +9,10 @@ using System.Reflection;
 using System.Runtime.Versioning;
 
 [assembly: TargetFramework(".NETFramework,Version=v4.8")]
-[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyVersion(WindowsUsageWidget.AppVersion.AssemblyNumber)]
+[assembly: AssemblyFileVersion(WindowsUsageWidget.AppVersion.AssemblyNumber)]
+[assembly: AssemblyInformationalVersion(WindowsUsageWidget.AppVersion.Number)]
+[assembly: AssemblyProduct("Codex Usage Widget")]
 [assembly: AssemblyTitle("Codex Usage Widget · Windows")]
 
 namespace WindowsUsageWidget
@@ -52,6 +55,7 @@ namespace WindowsUsageWidget
             var legacy=new Preferences { Material="Acrylic" };legacy.Normalize();Require(legacy.Material=="Solid","legacy acrylic becomes solid",results);
             var p=new Preferences { RefreshSeconds=0,Width=1000,Height=0,AcrylicTintPercent=200 };p.Normalize();Require(p.RefreshSeconds==15&&p.Width==520&&p.Height==390&&p.AcrylicTintPercent==100,"parameter boundaries",results);
             var serializer=new JavaScriptSerializer();Require(serializer.Deserialize<Preferences>(serializer.Serialize(p)).Width==520,"settings serialization",results);
+            var versionInfo=System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);Require(Assembly.GetExecutingAssembly().GetName().Version.ToString()==AppVersion.AssemblyNumber&&versionInfo.FileVersion==AppVersion.AssemblyNumber&&versionInfo.ProductVersion==AppVersion.Number,"application and EXE metadata versions match",results);
             var assemblies=new List<string>();foreach(var name in Assembly.GetExecutingAssembly().GetReferencedAssemblies())assemblies.Add(name.Name);
             Require(!assemblies.Contains("Microsoft.WindowsAppSDK")&&!assemblies.Contains("Microsoft.WinUI")&&!assemblies.Contains("System.Text.Json"),"system framework only",results);
             string selected="";

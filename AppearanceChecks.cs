@@ -185,6 +185,7 @@ class AppearanceChecks
         {
             try
             {
+                Require(Find<TextBlock>(window,"AppVersionLabel").Text==AppVersion.Display,"settings displays application version");
                 for(var mode=0;mode<2;mode++)for(var preset=1;preset<SettingsWindow.PaletteNames.Length;preset++)
                 {
                     Find<RadioButton>(window,mode==0?"TaskbarPreviewLight":"TaskbarPreviewDark").IsChecked=true;Find<ComboBox>(window,"TaskbarPalette").SelectedIndex=preset;Find<Button>(window,"ApplySettings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
