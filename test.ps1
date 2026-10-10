@@ -1,4 +1,4 @@
-param([switch]$Appearance,[switch]$Live,[switch]$StoreOnly)
+﻿param([switch]$Appearance,[switch]$Live,[switch]$StoreOnly)
 $ErrorActionPreference = 'Stop'
 if ($StoreOnly -and -not $Live) { throw '-StoreOnly requires -Live.' }
 & (Join-Path $PSScriptRoot 'build.ps1')
@@ -14,7 +14,7 @@ if ($Appearance) {
     $taskReferences = @('System.dll','System.Core.dll','System.Web.Extensions.dll','System.Windows.Forms.dll','System.Xaml.dll') | ForEach-Object { '/reference:' + (Join-Path $taskFramework $_) }
     $taskReferences += @('PresentationFramework.dll','PresentationCore.dll','WindowsBase.dll') | ForEach-Object { '/reference:' + (Join-Path $taskFramework ('WPF\' + $_)) }
     $taskTestExe = Join-Path $taskOutput 'AppearanceChecks.exe'
-    & (Join-Path $taskFramework 'csc.exe') /nologo /utf8output /target:exe /platform:x64 ('/reference:' + $taskExe) ('/win32manifest:' + (Join-Path $PSScriptRoot 'src\app.manifest')) ('/out:' + $taskTestExe) @taskReferences (Join-Path $PSScriptRoot 'tests\AppearanceChecks.cs')
+    & (Join-Path $taskFramework 'csc.exe') /nologo /utf8output /target:exe /platform:x64 ('/reference:' + $taskExe) ('/win32manifest:' + (Join-Path $PSScriptRoot 'app.manifest')) ('/out:' + $taskTestExe) @taskReferences (Join-Path $PSScriptRoot 'AppearanceChecks.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Appearance checks build failed.' }
     & $taskTestExe
     if ($LASTEXITCODE -ne 0) { throw 'Appearance checks failed.' }
