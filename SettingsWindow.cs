@@ -68,6 +68,12 @@ namespace WindowsUsageWidget
             var labelNote=UI.Text("留空隐藏；{mode} 自动切换为“余 / 用”。",11);labelNote.Opacity=.65;labelNote.Margin=new Thickness(0,0,0,14);panel.Children.Add(labelNote);
             var fontSize=new Slider { Name="TaskbarFontSize",Minimum=10,Maximum=14,Value=draft.TaskbarFontSize,TickFrequency=1,IsSnapToTickEnabled=true,Height=26 };
             var fontLabel=UI.Text("",12);fontLabel.Margin=new Thickness(0,0,0,6);panel.Children.Add(fontLabel);fontSize.Margin=new Thickness(0,0,0,14);panel.Children.Add(fontSize);
+            var resetIds=new[] { "Weekday","Clock","Countdown","DateTime","Date","Hidden" };
+            var resetNames=new[] { "星期＋时刻","时刻","倒计时","日期＋时刻","日期","隐藏" };
+            var primaryReset=Choice(resetNames,Math.Max(0,Array.IndexOf(resetIds,draft.TaskbarPrimaryResetStyle)));primaryReset.Name="TaskbarPrimaryResetStyle";
+            var weeklyReset=Choice(resetNames,Math.Max(0,Array.IndexOf(resetIds,draft.TaskbarWeeklyResetStyle)));weeklyReset.Name="TaskbarWeeklyResetStyle";
+            var resetGrid=new Grid();resetGrid.ColumnDefinitions.Add(new ColumnDefinition());resetGrid.ColumnDefinitions.Add(new ColumnDefinition());
+            for(var column=0;column<2;column++) { var stack=new StackPanel { Margin=column==0?new Thickness(0,0,7,0):new Thickness(7,0,0,0) };Add(stack,column==0?"5 小时重置时间":"每周重置时间",column==0?primaryReset:weeklyReset);Grid.SetColumn(stack,column);resetGrid.Children.Add(stack); }panel.Children.Add(resetGrid);
             var image=new System.Windows.Controls.Image { Height=42,Stretch=Stretch.None,HorizontalAlignment=HorizontalAlignment.Center };
             var frame=new Border { Child=image,CornerRadius=new CornerRadius(10),Padding=new Thickness(8,10,8,10),Margin=new Thickness(0,0,0,8) };panel.Children.Add(frame);
             var darkPreview=new CheckBox { Name="TaskbarPreviewDark",Content="深色任务栏预览 · 示例用量",IsChecked=UI.Dark(draft),FontSize=11,Margin=new Thickness(0,0,0,18) };panel.Children.Add(darkPreview);
@@ -109,6 +115,7 @@ namespace WindowsUsageWidget
             {
                 p.TaskbarStyle=styleIds[Math.Max(0,style.SelectedIndex)];
                 p.ShowUsed=used.IsChecked==true;p.TaskbarPrimaryLabel=firstLabel.Text;p.TaskbarSecondaryLabel=secondLabel.Text;p.TaskbarFontSize=(int)fontSize.Value;
+                p.TaskbarPrimaryResetStyle=resetIds[Math.Max(0,primaryReset.SelectedIndex)];p.TaskbarWeeklyResetStyle=resetIds[Math.Max(0,weeklyReset.SelectedIndex)];
                 p.TaskbarPrimaryColor=fields[0].Text.Trim();p.TaskbarSecondaryColor=fields[1].Text.Trim();p.TaskbarTextColor=fields[2].Text.Trim();p.TaskbarBackgroundColor=fields[3].Text.Trim();p.TaskbarWarningColor=fields[4].Text.Trim();p.TaskbarStaleColor=fields[5].Text.Trim();p.TaskbarBackgroundOpacity=(int)opacity.Value;
                 p.TaskbarMediumColor=fields[6].Text.Trim();p.TaskbarMediumPercent=(int)medium.Value;
             };
@@ -134,6 +141,7 @@ namespace WindowsUsageWidget
             style.SelectionChanged+=delegate { preview(); };darkPreview.Checked+=delegate { preview(); };darkPreview.Unchecked+=delegate { preview(); };opacity.ValueChanged+=delegate { preview(); };
             previewState.SelectionChanged+=delegate { preview(); };medium.ValueChanged+=delegate { preview(); };
             remainingChoice.Checked+=delegate { preview(); };used.Checked+=delegate { preview(); };firstLabel.TextChanged+=delegate { preview(); };secondLabel.TextChanged+=delegate { preview(); };fontSize.ValueChanged+=delegate { preview(); };SourceInitialized+=delegate { preview(); };DpiChanged+=delegate { preview(); };
+            primaryReset.SelectionChanged+=delegate { preview(); };weeklyReset.SelectionChanged+=delegate { preview(); };
             foreach(var input in fields)input.TextChanged+=delegate { preview(); };
             palette.SelectionChanged+=delegate
             {

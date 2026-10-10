@@ -24,6 +24,8 @@ namespace WindowsUsageWidget
         public string TaskbarPrimaryLabel { get; set; }
         public string TaskbarSecondaryLabel { get; set; }
         public int TaskbarFontSize { get; set; }
+        public string TaskbarPrimaryResetStyle { get; set; }
+        public string TaskbarWeeklyResetStyle { get; set; }
         public string TaskbarStyle { get; set; }
         public string TaskbarPrimaryColor { get; set; }
         public string TaskbarSecondaryColor { get; set; }
@@ -43,9 +45,9 @@ namespace WindowsUsageWidget
         public string CodexPath { get; set; }
         public int? X { get; set; }
         public int? Y { get; set; }
-        public Preferences() { RefreshSeconds=60; WarningPercent=20; AlwaysOnTop=true; StartMinimized=true; TaskbarQuota="Primary"; TaskbarSide="Right"; TaskbarMeterWidth=220; TaskbarPrimaryLabel="5小时{mode}";TaskbarSecondaryLabel="每周{mode}";TaskbarFontSize=12;TaskbarStyle="Rounded";TaskbarPrimaryColor="Auto";TaskbarSecondaryColor="Auto";TaskbarTextColor="Auto";TaskbarBackgroundColor="Auto";TaskbarWarningColor="#EBB048";TaskbarStaleColor="#E15C5C";TaskbarMediumColor="Auto";TaskbarMediumPercent=50;Theme="System"; Material="Solid"; AcrylicTintPercent=18; OpacityPercent=100; Width=360; Height=390; CodexPath=""; }
+        public Preferences() { RefreshSeconds=60; WarningPercent=20; AlwaysOnTop=true; StartMinimized=true; TaskbarQuota="Primary"; TaskbarSide="Right"; TaskbarMeterWidth=220; TaskbarPrimaryLabel="5小时{mode}";TaskbarSecondaryLabel="每周{mode}";TaskbarFontSize=12;TaskbarPrimaryResetStyle="Clock";TaskbarWeeklyResetStyle="Weekday";TaskbarStyle="Rounded";TaskbarPrimaryColor="Auto";TaskbarSecondaryColor="Auto";TaskbarTextColor="Auto";TaskbarBackgroundColor="Auto";TaskbarWarningColor="#EBB048";TaskbarStaleColor="#E15C5C";TaskbarMediumColor="Auto";TaskbarMediumPercent=50;Theme="System"; Material="Solid"; AcrylicTintPercent=18; OpacityPercent=100; Width=360; Height=390; CodexPath=""; }
         public static string FilePath { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json"); } }
-        public void Normalize() { RefreshSeconds=Clamp(RefreshSeconds,15,3600); WarningPercent=Clamp(WarningPercent,0,100); AcrylicTintPercent=Clamp(AcrylicTintPercent,0,100); OpacityPercent=Clamp(OpacityPercent,50,100); Width=Clamp(Width,320,520); Height=Clamp(Height,390,650); TaskbarMeterWidth=Clamp(TaskbarMeterWidth,200,380);TaskbarOffset=Clamp(TaskbarOffset,-1200,1200);if(TaskbarSide!="Left")TaskbarSide="Right"; if(TaskbarQuota!="Secondary")TaskbarQuota="Primary"; if(Theme!="Dark"&&Theme!="Light")Theme="System"; if(Material!="Transparent")Material="Solid";if(Array.IndexOf(new[] { "Rounded","Segments","Cards","Dots","Gradient","Rings","Badges" },TaskbarStyle)<0)TaskbarStyle="Rounded";TaskbarBackgroundOpacity=Clamp(TaskbarBackgroundOpacity,0,100);TaskbarPrimaryColor=NormalizeColor(TaskbarPrimaryColor,"Auto");TaskbarSecondaryColor=NormalizeColor(TaskbarSecondaryColor,"Auto");TaskbarTextColor=NormalizeColor(TaskbarTextColor,"Auto");TaskbarBackgroundColor=NormalizeColor(TaskbarBackgroundColor,"Auto");TaskbarWarningColor=NormalizeColor(TaskbarWarningColor,"#EBB048");TaskbarStaleColor=NormalizeColor(TaskbarStaleColor,"#E15C5C");TaskbarMediumColor=NormalizeColor(TaskbarMediumColor,"Auto");TaskbarMediumPercent=Clamp(TaskbarMediumPercent,WarningPercent,100);TaskbarFontSize=Clamp(TaskbarFontSize,10,14);TaskbarPrimaryLabel=NormalizeLabel(TaskbarPrimaryLabel,"5小时{mode}");TaskbarSecondaryLabel=NormalizeLabel(TaskbarSecondaryLabel,"每周{mode}"); }
+        public void Normalize() { RefreshSeconds=Clamp(RefreshSeconds,15,3600); WarningPercent=Clamp(WarningPercent,0,100); AcrylicTintPercent=Clamp(AcrylicTintPercent,0,100); OpacityPercent=Clamp(OpacityPercent,50,100); Width=Clamp(Width,320,520); Height=Clamp(Height,390,650); TaskbarMeterWidth=Clamp(TaskbarMeterWidth,200,380);TaskbarOffset=Clamp(TaskbarOffset,-1200,1200);if(TaskbarSide!="Left")TaskbarSide="Right"; if(TaskbarQuota!="Secondary")TaskbarQuota="Primary"; if(Theme!="Dark"&&Theme!="Light")Theme="System"; if(Material!="Transparent")Material="Solid";if(Array.IndexOf(new[] { "Rounded","Segments","Cards","Dots","Gradient","Rings","Badges" },TaskbarStyle)<0)TaskbarStyle="Rounded";TaskbarBackgroundOpacity=Clamp(TaskbarBackgroundOpacity,0,100);TaskbarPrimaryColor=NormalizeColor(TaskbarPrimaryColor,"Auto");TaskbarSecondaryColor=NormalizeColor(TaskbarSecondaryColor,"Auto");TaskbarTextColor=NormalizeColor(TaskbarTextColor,"Auto");TaskbarBackgroundColor=NormalizeColor(TaskbarBackgroundColor,"Auto");TaskbarWarningColor=NormalizeColor(TaskbarWarningColor,"#EBB048");TaskbarStaleColor=NormalizeColor(TaskbarStaleColor,"#E15C5C");TaskbarMediumColor=NormalizeColor(TaskbarMediumColor,"Auto");TaskbarMediumPercent=Clamp(TaskbarMediumPercent,WarningPercent,100);TaskbarFontSize=Clamp(TaskbarFontSize,10,14);TaskbarPrimaryLabel=NormalizeLabel(TaskbarPrimaryLabel,"5小时{mode}");TaskbarSecondaryLabel=NormalizeLabel(TaskbarSecondaryLabel,"每周{mode}");TaskbarPrimaryResetStyle=NormalizeResetStyle(TaskbarPrimaryResetStyle,"Clock");TaskbarWeeklyResetStyle=NormalizeResetStyle(TaskbarWeeklyResetStyle,"Weekday"); }
         static string NormalizeLabel(string value,string fallback)
         {
             if(value==null)return fallback;
@@ -54,6 +56,7 @@ namespace WindowsUsageWidget
             return elements.Length>24?value.Substring(0,elements[24]):value;
         }
         public string TaskbarLabel(bool weekly) { return (weekly?TaskbarSecondaryLabel:TaskbarPrimaryLabel).Replace("{mode}",ShowUsed?"用":"余"); }
+        public static string NormalizeResetStyle(string value,string fallback) { return Array.IndexOf(new[] { "Weekday","Clock","Countdown","DateTime","Date","Hidden" },value)>=0?value:fallback; }
         public static bool IsColor(string value)
         {
             if(string.Equals(value,"Auto",StringComparison.OrdinalIgnoreCase))return true;
@@ -99,10 +102,26 @@ namespace WindowsUsageWidget
         }
         public string CompactReset(bool weekly)
         {
-            if(Reset<=0)return "↻ —";
+            return "↻ "+ResetDisplay(weekly?"Weekday":"Clock");
+        }
+        public string ResetDisplay(string style) { return ResetDisplay(style,DateTime.UtcNow); }
+        public string ResetDisplay(string style,DateTime utcNow)
+        {
+            if(style=="Hidden")return "";
+            if(Reset<=0)return "—";
+            if(style=="Countdown")
+            {
+                var seconds=Reset-(utcNow-new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc)).TotalSeconds;
+                if(seconds<=0)return "待更新";
+                var left=TimeSpan.FromSeconds(seconds);
+                return left.TotalDays>=1?((int)left.TotalDays)+"天"+left.Hours+"时":left.TotalHours>=1?((int)left.TotalHours)+"时"+left.Minutes+"分":left.TotalMinutes>=1?((int)left.TotalMinutes)+"分":"不足1分";
+            }
             var absolute=new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc).AddSeconds(Reset).ToLocalTime();
             var time=absolute.ToString("HH:mm",System.Globalization.CultureInfo.InvariantCulture);
-            return "↻ "+(weekly?"周"+"日一二三四五六"[(int)absolute.DayOfWeek]+" ":"")+time;
+            if(style=="Weekday")return "周"+"日一二三四五六"[(int)absolute.DayOfWeek]+" "+time;
+            if(style=="DateTime")return absolute.ToString("MM-dd HH:mm",System.Globalization.CultureInfo.InvariantCulture);
+            if(style=="Date")return absolute.ToString("MM-dd",System.Globalization.CultureInfo.InvariantCulture);
+            return time;
         }
     }
     public class Snapshot

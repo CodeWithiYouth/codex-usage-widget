@@ -2,6 +2,8 @@
 
 一个简洁的 Windows 任务栏 Codex 用量组件。通过本机已登录的 Codex 后台程序读取账号额度，显示 5 小时和每周用量、进度及重置时间。
 
+[下载最新 Release](https://github.com/CodeWithiYouth/codex-usage-widget/releases/latest) · [自动构建](https://github.com/CodeWithiYouth/codex-usage-widget/actions/workflows/build-release.yml)
+
 使用 C#、WPF、WinForms 和 Windows 自带的 .NET Framework 4.8。无需 Node.js、Visual Studio、WinUI 或 Windows App SDK；编译出的主程序约 127 KB，不捆绑运行库。
 
 ## 外观
@@ -11,6 +13,8 @@
 支持圆角进度条、分段进度条、双行卡片、点阵、渐变、环形仪表和数字胶囊。可以分别调整两类额度、文字、背景、中余量、低余量及过期数据颜色，支持配色预设、选色器和十六进制输入。
 
 “剩余 / 已用”双选开关同时作用于任务栏和详细窗口。两行前缀可以自定义；`{mode}` 自动替换为“余 / 用”，留空隐藏。支持字号、宽度、左右位置、偏移和背景不透明度调整，设置中有即时预览。
+
+环形仪表采用紧凑左右布局，百分比显示在圆心，右侧显示标题与重置时间。5 小时和每周时间分别支持星期＋时刻、时刻、倒计时、日期＋时刻、日期和隐藏六种格式；放不下的日期时间自动分行，避免只显示省略号。
 
 ![设置窗口，使用模拟数据](settings.png)
 
@@ -77,6 +81,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
 检查结果和测试图片写入 `dist/`。外观检查覆盖旧配置迁移、配色、阈值优先级、七种样式、显示开关、自定义前缀、字号和 DPI 预览。
+
+## 自动构建和发布
+
+提交到 `main` 或创建 PR 会自动构建 Windows x64 EXE、执行无需登录的基础检查，并保存构建产物。CI 不读取账号用量，也不运行需要桌面窗口的外观检查。
+
+推送 `v1.0.0` 等版本标签，会在构建检查通过后自动发布 Release。也可以打开 Actions → Build and Release → Run workflow，在 `release_tag` 中输入新版本号；留空只构建。当前版本号必须使用 `v主版本.次版本.修订版本` 格式，可带预发布后缀。
+
+Release 附件包含独立 EXE、带说明与启动脚本的便携 ZIP、`SHA256SUMS.txt`。下载后双击 EXE，或解压 ZIP 后运行 `Start.cmd`。已有 Release 不会被重复运行覆盖；更新请使用新版本号。
+
+本地打包：先运行 `build.ps1`，再运行 `package.ps1 -Version v1.0.0`，附件生成于 `dist/release/`。
 
 ## 源码
 

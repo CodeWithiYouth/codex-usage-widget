@@ -92,6 +92,36 @@ class AppearanceChecks
         }
         Require(true,"all styles render long custom labels and font sizes at 100,125,150,200 percent");
         File.WriteAllText(Path.Combine(folder,"dpi-render-checks.json"),serializer.Serialize(scaled));
+        var resetDefault=serializer.Deserialize<Preferences>("{}");resetDefault.Normalize();Require(resetDefault.TaskbarPrimaryResetStyle=="Clock"&&resetDefault.TaskbarWeeklyResetStyle=="Weekday","old reset configuration keeps clock and weekday");
+        var resetInvalid=new Preferences { TaskbarPrimaryResetStyle="bad",TaskbarWeeklyResetStyle=null };resetInvalid.Normalize();Require(resetInvalid.TaskbarPrimaryResetStyle=="Clock"&&resetInvalid.TaskbarWeeklyResetStyle=="Weekday","invalid reset styles fall back safely");
+        var epoch=new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);var reference=new DateTime(2026,10,10,0,0,0,DateTimeKind.Utc);
+        var resetLimit=new Limit { Reset=(long)(reference.AddDays(4).AddHours(23)-epoch).TotalSeconds };
+        Require(resetLimit.ResetDisplay("Countdown",reference)=="4天23时","weekly countdown uses days and hours");resetLimit.Reset=(long)(reference.AddHours(2).AddMinutes(3)-epoch).TotalSeconds;
+        Require(resetLimit.ResetDisplay("Countdown",reference)=="2时3分","short countdown uses hours and minutes");resetLimit.Reset=(long)(reference.AddSeconds(20)-epoch).TotalSeconds;Require(resetLimit.ResetDisplay("Countdown",reference)=="不足1分","sub-minute countdown remains visible");resetLimit.Reset=(long)(reference.AddSeconds(-1)-epoch).TotalSeconds;Require(resetLimit.ResetDisplay("Countdown",reference)=="待更新","expired countdown waits for server data");Require(new Limit().ResetDisplay("Countdown")=="—"&&resetLimit.ResetDisplay("Hidden")=="","unknown and hidden reset states");
+        var localReset=new DateTime(2026,10,15,14,27,0,DateTimeKind.Local);resetLimit.Reset=(long)(localReset.ToUniversalTime()-epoch).TotalSeconds;
+        Require(resetLimit.ResetDisplay("Clock")=="14:27"&&resetLimit.ResetDisplay("Weekday")=="周四 14:27"&&resetLimit.ResetDisplay("DateTime")=="10-15 14:27"&&resetLimit.ResetDisplay("Date")=="10-15","absolute reset formats use local time");
+        var resetStyles=new[] { "Weekday","Clock","Countdown","DateTime","Date","Hidden" };
+        using(var image=new Bitmap(820,530))using(var graphics=Graphics.FromImage(image))using(var title=new Font("Segoe UI",12))
+        {
+            graphics.Clear(Color.FromArgb(247,249,252));
+            for(var row=0;row<resetStyles.Length;row++)for(var col=0;col<2;col++)
+            {
+                var x=20+col*405;var y=10+row*86;graphics.DrawString(resetStyles[row]+(col==0?" / Light":" / Dark"),title,Brushes.DimGray,x,y);
+                var p=new Preferences { TaskbarStyle="Rings",TaskbarWeeklyResetStyle=resetStyles[row],TaskbarBackgroundOpacity=20 };
+                using(var tile=new Bitmap(360,42))using(var g=Graphics.FromImage(tile)) { g.Clear(col==0?Color.FromArgb(232,235,241):Color.FromArgb(32,35,42));MeterRenderer.Draw(g,260,42,1,sample,p,false,col==1);graphics.DrawImageUnscaled(tile,x,y+26); }
+            }
+            image.Save(Path.Combine(folder,"horizontal-rings-reset-preview.png"));
+        }
+        foreach(var style in resetStyles)foreach(var meterStyle in new[] { "Rounded","Segments","Cards","Dots","Gradient","Rings","Badges" })foreach(var factor in new[] { 1.0,1.25,1.5,2.0 })using(var image=new Bitmap((int)Math.Round(200*factor),(int)Math.Round(42*factor)))using(var g=Graphics.FromImage(image))
+        { var p=new Preferences { TaskbarStyle=meterStyle,TaskbarPrimaryResetStyle=style,TaskbarWeeklyResetStyle=style };MeterRenderer.Draw(g,image.Width,image.Height,factor,sample,p,false,true);MeterRenderer.Draw(g,image.Width,image.Height,factor,null,p,true,true); }
+        Require(true,"six reset formats render in all seven styles and four DPI scales");
+        using(var image=new Bitmap(260,42))using(var g=Graphics.FromImage(image))
+        {
+            var p=new Preferences { TaskbarStyle="Rings",TaskbarPrimaryColor="#FF3366",TaskbarSecondaryColor="#33AAFF" };MeterRenderer.Draw(g,260,42,1,sample,p,false,true);
+            var leftColor=false;var rightColor=false;
+            for(var y=0;y<image.Height;y++)for(var x=0;x<image.Width;x++) { var pixel=image.GetPixel(x,y);if(x<130&&pixel.R==255&&pixel.G==51&&pixel.B==102)leftColor=true;if(x>=130&&pixel.R==51&&pixel.G==170&&pixel.B==255)rightColor=true; }
+            Require(leftColor&&rightColor,"ring quotas render in separate left and right panels");
+        }
         var app=new Application();app.Resources.MergedDictionaries.Add(Styles.Create());
         var window=new SettingsWindow(new Preferences());Preferences saved=null;window.Saved+=delegate(Preferences p) { saved=p; };
         window.Loaded+=delegate
@@ -99,7 +129,9 @@ class AppearanceChecks
             try
             {
                 Require(Find<ComboBox>(window,"TaskbarStyle").Items.Count==7,"settings offers all seven styles");
-                Find<ComboBox>(window,"TaskbarStyle").SelectedIndex=6;
+                Find<ComboBox>(window,"TaskbarStyle").SelectedIndex=5;
+                Find<ComboBox>(window,"TaskbarPrimaryResetStyle").SelectedIndex=5;
+                Find<ComboBox>(window,"TaskbarWeeklyResetStyle").SelectedIndex=2;
                 var remaining=Find<RadioButton>(window,"QuotaRemaining");var used=Find<RadioButton>(window,"QuotaUsed");
                 used.IsChecked=true;Require(used.IsChecked==true&&remaining.IsChecked==false,"segmented switch selects used exclusively");
                 remaining.IsChecked=true;Require(used.IsChecked==false&&remaining.IsChecked==true,"segmented switch selects remaining exclusively");used.IsChecked=true;
@@ -114,14 +146,14 @@ class AppearanceChecks
                 Find<Slider>(window,"TaskbarMediumThreshold").Value=65;
                 Find<ComboBox>(window,"TaskbarPreviewState").SelectedIndex=1;
                 Find<ComboBox>(window,"TaskbarPreviewState").SelectedIndex=1;
-                Find<ScrollViewer>(window,"").ScrollToVerticalOffset(0);window.UpdateLayout();
+                Find<ScrollViewer>(window,"").ScrollToVerticalOffset(230);window.UpdateLayout();
                 var image=Find<System.Windows.Controls.Image>(window,"");var source=(System.Windows.Media.Imaging.BitmapSource)image.Source;var dpi=System.Windows.Media.VisualTreeHelper.GetDpi(window);
                 Require(source.PixelWidth==(int)Math.Round(220*dpi.DpiScaleX)&&Math.Abs(source.DpiX-96*dpi.DpiScaleX)<1,"preview rendered at current screen DPI without 96 DPI enlargement");
                 var capture=new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Round(window.ActualWidth*dpi.DpiScaleX),(int)Math.Round(window.ActualHeight*dpi.DpiScaleY),96*dpi.DpiScaleX,96*dpi.DpiScaleY,System.Windows.Media.PixelFormats.Pbgra32);capture.Render(window);
                 var encoder=new System.Windows.Media.Imaging.PngBitmapEncoder();encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(capture));using(var file=File.Create(Path.Combine(folder,"display-label-settings-preview.png")))encoder.Save(file);
                 Find<ComboBox>(window,"TaskbarPreviewState").SelectedIndex=3;
                 SaveButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                Require(saved!=null&&saved.TaskbarStyle=="Badges"&&saved.TaskbarPrimaryColor=="#1234AB"&&saved.TaskbarSecondaryColor=="#526CCC"&&saved.TaskbarBackgroundOpacity==45&&saved.TaskbarMediumColor=="#45BCAB"&&saved.TaskbarMediumPercent==65&&saved.ShowUsed&&saved.TaskbarPrimaryLabel=="日额度{mode}"&&saved.TaskbarSecondaryLabel=="长期预算"&&saved.TaskbarFontSize==13,"settings UI saves mode, custom labels, font size and appearance settings");
+                Require(saved!=null&&saved.TaskbarStyle=="Rings"&&saved.TaskbarPrimaryColor=="#1234AB"&&saved.TaskbarSecondaryColor=="#526CCC"&&saved.TaskbarBackgroundOpacity==45&&saved.TaskbarMediumColor=="#45BCAB"&&saved.TaskbarMediumPercent==65&&saved.ShowUsed&&saved.TaskbarPrimaryLabel=="日额度{mode}"&&saved.TaskbarSecondaryLabel=="长期预算"&&saved.TaskbarFontSize==13&&saved.TaskbarPrimaryResetStyle=="Hidden"&&saved.TaskbarWeeklyResetStyle=="Countdown","settings UI saves independent reset styles and horizontal ring selection");
                 File.WriteAllText(Path.Combine(folder,"appearance-checks.json"),serializer.Serialize(new { ok=true,checks=checks }));
             }
             catch(Exception e) { File.WriteAllText(Path.Combine(folder,"appearance-error.txt"),e.ToString());Environment.ExitCode=1;window.Close(); }
