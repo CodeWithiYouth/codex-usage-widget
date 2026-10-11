@@ -14,6 +14,14 @@ namespace WindowsUsageWidget
     {
         public int RefreshSeconds { get; set; }
         public int WarningPercent { get; set; }
+        public int? WeeklyWarningPercent { get; set; }
+        public int? WeeklyMediumPercent { get; set; }
+        public string WeeklyWarningColor { get; set; }
+        public string WeeklyMediumColor { get; set; }
+        public int LowThreshold(bool weekly) { return weekly?(WeeklyWarningPercent??WarningPercent):WarningPercent; }
+        public int MediumThreshold(bool weekly) { return Math.Max(LowThreshold(weekly),weekly?(WeeklyMediumPercent??TaskbarMediumPercent):TaskbarMediumPercent); }
+        public string LowColor(bool weekly) { return weekly?(WeeklyWarningColor??TaskbarWarningColor):TaskbarWarningColor; }
+        public string MediumColor(bool weekly) { return weekly?(WeeklyMediumColor??TaskbarMediumColor):TaskbarMediumColor; }
         public bool AlwaysOnTop { get; set; }
         public bool ShowUsed { get; set; }
         public bool StartMinimized { get; set; }
@@ -21,9 +29,21 @@ namespace WindowsUsageWidget
         public string TaskbarSide { get; set; }
         public int TaskbarOffset { get; set; }
         public int TaskbarMeterWidth { get; set; }
+        public int TaskbarMeterHeight { get; set; }
+        public int TaskbarHorizontalSpacing { get; set; }
+        public int TaskbarVerticalSpacing { get; set; }
         public string TaskbarPrimaryLabel { get; set; }
         public string TaskbarSecondaryLabel { get; set; }
         public int TaskbarFontSize { get; set; }
+        public int TaskbarPercentageFontSize { get; set; }
+        public string TaskbarTextFont { get; set; }
+        public string TaskbarNumberFont { get; set; }
+        public string TaskbarChineseFont { get; set; }
+        public static readonly string[] ChineseFontChoices={ "Microsoft YaHei UI","Microsoft YaHei","SimSun","SimHei","KaiTi","FangSong" };
+        public static readonly string[] FontChoices={ "Microsoft YaHei UI","Segoe UI","Arial","Consolas","Bahnschrift" };
+        public bool TaskbarShowPercentage { get; set; }
+        public bool TaskbarShowPercentSign { get; set; }
+        public int TaskbarRingThickness { get; set; }
         public string TaskbarPrimaryResetStyle { get; set; }
         public string TaskbarWeeklyResetStyle { get; set; }
         public string TaskbarStyle { get; set; }
@@ -45,9 +65,9 @@ namespace WindowsUsageWidget
         public string CodexPath { get; set; }
         public int? X { get; set; }
         public int? Y { get; set; }
-        public Preferences() { RefreshSeconds=60; WarningPercent=20; AlwaysOnTop=true; StartMinimized=true; TaskbarQuota="Primary"; TaskbarSide="Right"; TaskbarMeterWidth=220; TaskbarPrimaryLabel="5小时{mode}";TaskbarSecondaryLabel="每周{mode}";TaskbarFontSize=12;TaskbarPrimaryResetStyle="Clock";TaskbarWeeklyResetStyle="Weekday";TaskbarStyle="Rounded";TaskbarPrimaryColor="Auto";TaskbarSecondaryColor="Auto";TaskbarTextColor="Auto";TaskbarBackgroundColor="Auto";TaskbarWarningColor="#EBB048";TaskbarStaleColor="#E15C5C";TaskbarMediumColor="Auto";TaskbarMediumPercent=50;Theme="System"; Material="Solid"; AcrylicTintPercent=18; OpacityPercent=100; Width=360; Height=390; CodexPath=""; }
+        public Preferences() { RefreshSeconds=60; WarningPercent=20; AlwaysOnTop=true; StartMinimized=true; TaskbarQuota="Primary"; TaskbarSide="Right"; TaskbarMeterWidth=220;TaskbarMeterHeight=42;TaskbarHorizontalSpacing=10;TaskbarVerticalSpacing=0; TaskbarPrimaryLabel="5小时{mode}";TaskbarSecondaryLabel="每周{mode}";TaskbarFontSize=12;TaskbarPercentageFontSize=12;TaskbarTextFont=UI.TextFontFamily;TaskbarNumberFont=UI.TextFontFamily;TaskbarChineseFont=UI.TextFontFamily;TaskbarShowPercentage=true;TaskbarShowPercentSign=true;TaskbarRingThickness=3;TaskbarPrimaryResetStyle="Clock";TaskbarWeeklyResetStyle="Weekday";TaskbarStyle="Rounded";TaskbarPrimaryColor="Auto";TaskbarSecondaryColor="Auto";TaskbarTextColor="Auto";TaskbarBackgroundColor="Auto";TaskbarWarningColor="#EBB048";TaskbarStaleColor="#E15C5C";TaskbarMediumColor="Auto";TaskbarMediumPercent=50;Theme="System"; Material="Solid"; AcrylicTintPercent=18; OpacityPercent=100; Width=360; Height=390; CodexPath=""; }
         public static string FilePath { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json"); } }
-        public void Normalize() { RefreshSeconds=Clamp(RefreshSeconds,15,3600); WarningPercent=Clamp(WarningPercent,0,100); AcrylicTintPercent=Clamp(AcrylicTintPercent,0,100); OpacityPercent=Clamp(OpacityPercent,50,100); Width=Clamp(Width,320,520); Height=Clamp(Height,390,650); TaskbarMeterWidth=Clamp(TaskbarMeterWidth,200,380);TaskbarOffset=Clamp(TaskbarOffset,-1200,1200);if(TaskbarSide!="Left")TaskbarSide="Right"; if(TaskbarQuota!="Secondary")TaskbarQuota="Primary"; if(Theme!="Dark"&&Theme!="Light")Theme="System"; if(Material!="Transparent")Material="Solid";if(Array.IndexOf(new[] { "Rounded","Segments","Cards","Dots","Gradient","Rings","Badges" },TaskbarStyle)<0)TaskbarStyle="Rounded";TaskbarBackgroundOpacity=Clamp(TaskbarBackgroundOpacity,0,100);TaskbarPrimaryColor=NormalizeColor(TaskbarPrimaryColor,"Auto");TaskbarSecondaryColor=NormalizeColor(TaskbarSecondaryColor,"Auto");TaskbarTextColor=NormalizeColor(TaskbarTextColor,"Auto");TaskbarBackgroundColor=NormalizeColor(TaskbarBackgroundColor,"Auto");TaskbarWarningColor=NormalizeColor(TaskbarWarningColor,"#EBB048");TaskbarStaleColor=NormalizeColor(TaskbarStaleColor,"#E15C5C");TaskbarMediumColor=NormalizeColor(TaskbarMediumColor,"Auto");TaskbarMediumPercent=Clamp(TaskbarMediumPercent,WarningPercent,100);TaskbarFontSize=Clamp(TaskbarFontSize,10,14);TaskbarPrimaryLabel=NormalizeLabel(TaskbarPrimaryLabel,"5小时{mode}");TaskbarSecondaryLabel=NormalizeLabel(TaskbarSecondaryLabel,"每周{mode}");TaskbarPrimaryResetStyle=NormalizeResetStyle(TaskbarPrimaryResetStyle,"Clock");TaskbarWeeklyResetStyle=NormalizeResetStyle(TaskbarWeeklyResetStyle,"Weekday"); }
+        public void Normalize() { RefreshSeconds=Clamp(RefreshSeconds,15,3600); WarningPercent=Clamp(WarningPercent,0,100); AcrylicTintPercent=Clamp(AcrylicTintPercent,0,100); OpacityPercent=Clamp(OpacityPercent,50,100); Width=Clamp(Width,320,520); Height=Clamp(Height,390,650); TaskbarMeterWidth=Clamp(TaskbarMeterWidth,200,380);TaskbarMeterHeight=Clamp(TaskbarMeterHeight,24,64);TaskbarHorizontalSpacing=Clamp(TaskbarHorizontalSpacing,0,32);TaskbarVerticalSpacing=Clamp(TaskbarVerticalSpacing,0,8);TaskbarOffset=Clamp(TaskbarOffset,-1200,1200);if(TaskbarSide!="Left")TaskbarSide="Right"; if(TaskbarQuota!="Secondary")TaskbarQuota="Primary"; if(Theme!="Dark"&&Theme!="Light")Theme="System"; if(Material!="Transparent")Material="Solid";if(Array.IndexOf(new[] { "Rounded","Segments","Cards","Dots","Gradient","Rings","Badges" },TaskbarStyle)<0)TaskbarStyle="Rounded";TaskbarBackgroundOpacity=Clamp(TaskbarBackgroundOpacity,0,100);TaskbarPrimaryColor=NormalizeColor(TaskbarPrimaryColor,"Auto");TaskbarSecondaryColor=NormalizeColor(TaskbarSecondaryColor,"Auto");TaskbarTextColor=NormalizeColor(TaskbarTextColor,"Auto");TaskbarBackgroundColor=NormalizeColor(TaskbarBackgroundColor,"Auto");TaskbarWarningColor=NormalizeColor(TaskbarWarningColor,"#EBB048");TaskbarStaleColor=NormalizeColor(TaskbarStaleColor,"#E15C5C");TaskbarMediumColor=NormalizeColor(TaskbarMediumColor,"Auto");TaskbarMediumPercent=Clamp(TaskbarMediumPercent,WarningPercent,100);if(WeeklyWarningPercent.HasValue)WeeklyWarningPercent=Clamp(WeeklyWarningPercent.Value,0,100);if(WeeklyMediumPercent.HasValue)WeeklyMediumPercent=Clamp(WeeklyMediumPercent.Value,LowThreshold(true),100);if(WeeklyWarningColor!=null)WeeklyWarningColor=NormalizeColor(WeeklyWarningColor,TaskbarWarningColor);if(WeeklyMediumColor!=null)WeeklyMediumColor=NormalizeColor(WeeklyMediumColor,TaskbarMediumColor);if(Array.IndexOf(ChineseFontChoices,TaskbarChineseFont)<0)TaskbarChineseFont=UI.TextFontFamily;if(Array.IndexOf(FontChoices,TaskbarTextFont)<0)TaskbarTextFont=UI.TextFontFamily;if(Array.IndexOf(FontChoices,TaskbarNumberFont)<0)TaskbarNumberFont=UI.TextFontFamily;TaskbarFontSize=Clamp(TaskbarFontSize,10,14);TaskbarPercentageFontSize=Clamp(TaskbarPercentageFontSize,8,20);TaskbarRingThickness=Clamp(TaskbarRingThickness,1,6);TaskbarPrimaryLabel=NormalizeLabel(TaskbarPrimaryLabel,"5小时{mode}");TaskbarSecondaryLabel=NormalizeLabel(TaskbarSecondaryLabel,"每周{mode}");TaskbarPrimaryResetStyle=NormalizeResetStyle(TaskbarPrimaryResetStyle,"Clock");TaskbarWeeklyResetStyle=NormalizeResetStyle(TaskbarWeeklyResetStyle,"Weekday"); }
         static string NormalizeLabel(string value,string fallback)
         {
             if(value==null)return fallback;

@@ -37,7 +37,7 @@ namespace WindowsUsageWidget
         Task cleanupTask;
         public MainWindow()
         {
-            Title="Codex 用量";WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;FontFamily=new FontFamily("Segoe UI");
+            Title="Codex 用量 · "+AppVersion.Display;WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
             Width=preferences.Width;Height=preferences.Height;Topmost=preferences.AlwaysOnTop;
             ShowInTaskbar=false;
             TaskbarItemInfo=new TaskbarItemInfo();
@@ -50,9 +50,9 @@ namespace WindowsUsageWidget
             if(preferences.X.HasValue&&preferences.Y.HasValue) { var desk=System.Windows.Forms.SystemInformation.VirtualScreen;Left=Math.Max(desk.Left,Math.Min(preferences.X.Value,desk.Right-Width));Top=Math.Max(desk.Top,Math.Min(preferences.Y.Value,desk.Bottom-Height)); }
             root.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });root.RowDefinitions.Add(new RowDefinition());
             var chrome=UI.Chrome(this);root.Children.Add(chrome);
-            var body=new StackPanel { Margin=new Thickness(22,10,22,18) };
+            var body=new StackPanel { Margin=new Thickness(12,6,12,12) };
             var name=new StackPanel();var heading=UI.Text("Codex",20);heading.FontWeight=FontWeights.SemiBold;name.Children.Add(heading);plan.Opacity=.75;plan.Margin=new Thickness(0,2,0,0);name.Children.Add(plan);
-            var settings=UI.Icon("\uE713","调整参数");settings.Click+=delegate { QueueSettings(); };var header=UI.TwoColumns(name,settings);header.Margin=new Thickness(0,0,0,24);body.Children.Add(header);
+            var settings=UI.Icon("\uE713","调整参数");settings.Click+=delegate { QueueSettings(); };var header=UI.TwoColumns(name,settings);header.Margin=new Thickness(0,0,0,14);body.Children.Add(header);
             body.Children.Add(primary.View);body.Children.Add(secondary.View);error.TextWrapping=TextWrapping.Wrap;error.Visibility=Visibility.Collapsed;error.Margin=new Thickness(0,0,0,8);body.Children.Add(error);
             status.Opacity=.75;body.Children.Add(UI.TwoColumns(status,refresh));refresh.Click+=async delegate { await Refresh(); };
             Grid.SetRow(body,1);root.Children.Add(body);Content=root;

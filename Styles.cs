@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Markup;
 
 namespace WindowsUsageWidget
@@ -14,7 +14,7 @@ namespace WindowsUsageWidget
   <SolidColorBrush x:Key='FormStroke' Color='#30808080'/>
   <Style x:Key='SegmentOption' TargetType='{x:Type RadioButton}'>
     <Setter Property='Foreground' Value='{DynamicResource FormText}'/>
-    <Setter Property='Height' Value='32'/><Setter Property='FontSize' Value='13'/><Setter Property='Margin' Value='1'/>
+    <Setter Property='VerticalAlignment' Value='Stretch'/><Setter Property='FontSize' Value='13'/><Setter Property='Margin' Value='0'/>
     <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='{x:Type RadioButton}'>
       <Border x:Name='Segment' CornerRadius='6' Background='Transparent'>
         <ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center' TextElement.Foreground='{TemplateBinding Foreground}'/>
@@ -32,7 +32,7 @@ namespace WindowsUsageWidget
     <Setter Property='BorderBrush' Value='{DynamicResource FormStroke}'/>
     <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='{x:Type TextBox}'>
       <Border CornerRadius='6' Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}' BorderThickness='1'>
-        <ScrollViewer x:Name='PART_ContentHost' Margin='{TemplateBinding Padding}'/>
+        <ScrollViewer x:Name='PART_ContentHost' Margin='0' VerticalAlignment='{TemplateBinding VerticalContentAlignment}' HorizontalScrollBarVisibility='Hidden' VerticalScrollBarVisibility='Hidden'/>
       </Border>
     </ControlTemplate></Setter.Value></Setter>
   </Style>

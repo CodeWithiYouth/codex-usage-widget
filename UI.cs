@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using System.Windows;
@@ -12,9 +12,11 @@ namespace WindowsUsageWidget
 {
     public static class UI
     {
+        public const string TextFontFamily="Microsoft YaHei UI";
+        public static bool TaskbarDark() { try { return Convert.ToInt32(Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize","SystemUsesLightTheme",1))==0; }catch{return false;} }
         public static bool Dark(Preferences p) { if(p.Theme=="Dark")return true;if(p.Theme=="Light")return false;try { return Convert.ToInt32(Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize","AppsUseLightTheme",1))==0; }catch{return false;} }
         public static SolidColorBrush Brush(byte r,byte g,byte b) { return new SolidColorBrush(Color.FromRgb(r,g,b)); }
-        public static TextBlock Text(string text,double size) { return new TextBlock { Text=text,FontSize=size,FontFamily=new FontFamily("Segoe UI"),VerticalAlignment=VerticalAlignment.Center }; }
+        public static TextBlock Text(string text,double size) { return new TextBlock { Text=text,FontSize=size,FontFamily=new FontFamily(UI.TextFontFamily),VerticalAlignment=VerticalAlignment.Center }; }
         public static Button Icon(string glyph,string tooltip)
         {
             var icon=Text(glyph,18);icon.FontFamily=new FontFamily("Segoe MDL2 Assets");icon.HorizontalAlignment=HorizontalAlignment.Center;
@@ -65,7 +67,7 @@ namespace WindowsUsageWidget
     }
     public class Gauge
     {
-        public StackPanel View=new StackPanel { Margin=new Thickness(0,0,0,20) };
+        public StackPanel View=new StackPanel { Margin=new Thickness(0,0,0,14) };
         TextBlock title,number,caption,reset;
         Border track,fill;
         double ratio;
@@ -83,8 +85,8 @@ namespace WindowsUsageWidget
         {
             if(value==null) { number.Text="—";ratio=0;fill.Width=0;caption.Text="暂无数据";reset.Text="";return; }
             var amount=p.ShowUsed?value.Used:value.Remaining;ratio=amount/100;fill.Width=Math.Max(0,track.ActualWidth*ratio);number.Text=amount.ToString("0.#")+"%";title.Text=value.Label;
-            bool low=value.Remaining<=p.WarningPercent;bool dark=UI.Dark(p);
-            var brush=low?(dark?UI.Brush(255,188,101):UI.Brush(111,63,0)):(dark?UI.Brush(108,224,207):UI.Brush(0,76,66));
+            bool weekly=value.Minutes==10080;bool low=value.Remaining<=p.LowThreshold(weekly);bool dark=UI.Dark(p);
+            var color=MeterRenderer.QuotaColor(value,p,false,dark,weekly);var brush=UI.Brush(color.R,color.G,color.B);
             number.Foreground=brush;fill.Background=brush;caption.Text=(p.ShowUsed?"已用":"剩余")+(low?" · 偏低":"");reset.Text=value.Countdown();
             if(value.Reset>0)View.ToolTip="重置时间："+new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc).AddSeconds(value.Reset).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         }
