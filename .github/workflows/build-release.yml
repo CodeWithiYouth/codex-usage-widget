@@ -46,6 +46,7 @@ jobs:
           $taskTag = ''
           if ($env:GITHUB_REF_TYPE -eq 'tag') { $taskTag = $env:GITHUB_REF_NAME }
           elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') { $taskRequested = [string]$env:REQUESTED_TAG; $taskTag = $taskRequested.Trim() }
+          elseif ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF_NAME -eq 'main') { $taskTag = $taskExpected }
           if ($taskTag -and $taskTag -ne $taskExpected) { throw "Release tag must match source version $taskExpected." }
           "release_tag=$taskTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "package_dir=dist/release/$taskExpected" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -94,4 +95,3 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "Codex Usage Widget $RELEASE_TAG" \
             --notes-file release/release-notes.md
-
