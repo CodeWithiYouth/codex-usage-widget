@@ -9,12 +9,17 @@ namespace WindowsUsageWidget
     public class SettingsWindow : Window
     {
         public event Action<Preferences> Saved;
-        public SettingsWindow(Preferences original)
+        public SettingsWindow(Preferences original) : this(original,new StartupRegistration()) { }
+        public SettingsWindow(Preferences original,StartupRegistration startup)
         {
             Title="Codex · 参数设置 · "+AppVersion.Display;WindowStyle=WindowStyle.None;ResizeMode=ResizeMode.NoResize;Width=420;Height=Math.Min(670,SystemParameters.WorkArea.Height-24);WindowStartupLocation=WindowStartupLocation.CenterOwner;FontFamily=new FontFamily(UI.TextFontFamily);Language=System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN");
             var draft=original.Copy();var root=new Grid();root.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });root.RowDefinitions.Add(new RowDefinition());root.Children.Add(UI.Chrome(this));
             var body=new Grid { Margin=new Thickness(12,6,4,12) };body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });body.RowDefinitions.Add(new RowDefinition());body.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto });
-            var title=UI.Text("参数设置",24);title.FontWeight=FontWeights.SemiBold;var version=UI.Text(AppVersion.Display,12);version.Name="AppVersionLabel";version.Opacity=.65;var titleRow=UI.TwoColumns(title,version);titleRow.Margin=new Thickness(0,0,8,10);body.Children.Add(titleRow);
+            var autoStart=new CheckBox { Name="StartWithWindows",Content="开机自启动",FontSize=13,Margin=new Thickness(12,0,0,0),VerticalAlignment=VerticalAlignment.Center,ToolTip="当前用户登录 Windows 后自动启动；点击应用或保存后生效。移动程序后请重新启用。" };
+            bool originalAutoStart=false;
+            try { originalAutoStart=startup.Enabled;autoStart.IsChecked=originalAutoStart; }
+            catch(Exception ex) { autoStart.IsEnabled=false;autoStart.ToolTip="无法读取开机自启动设置："+ex.Message; }
+            var title=UI.Text("参数设置",24);title.FontWeight=FontWeights.SemiBold;var version=UI.Text(AppVersion.Display,12);version.Name="AppVersionLabel";version.Opacity=.65;version.Margin=new Thickness(6,0,0,0);version.VerticalAlignment=VerticalAlignment.Center;var titleGroup=new StackPanel { Orientation=Orientation.Horizontal };titleGroup.Children.Add(title);titleGroup.Children.Add(autoStart);var titleRow=UI.TwoColumns(titleGroup,version);titleRow.Margin=new Thickness(0,0,8,10);body.Children.Add(titleRow);
             var previewPanel=new StackPanel { Margin=new Thickness(0,0,8,8) };Grid.SetRow(previewPanel,1);body.Children.Add(previewPanel);
             var panel=new StackPanel { Margin=new Thickness(0,0,6,0) };var scroll=new ScrollViewer { Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Padding=new Thickness(0) };Grid.SetRow(scroll,2);body.Children.Add(scroll);
 
@@ -65,6 +70,12 @@ namespace WindowsUsageWidget
                 draft.Theme=themeOptions[1].IsChecked==true?"Light":themeOptions[2].IsChecked==true?"Dark":"System";
                 draft.RefreshSeconds=seconds;draft.Width=w;draft.Height=h;draft.OpacityPercent=(int)opacity.Value;draft.AlwaysOnTop=top.IsChecked==true;draft.CodexPath=path.Text.Trim();draft.Normalize();
                 draft.StartMinimized=minimized.IsChecked==true;draft.TaskbarSide=sideOptions[0].IsChecked==true?"Left":"Right";draft.TaskbarMeterWidth=mw;draft.TaskbarMeterHeight=mh;draft.TaskbarOffset=off;draft.Normalize();
+                if(autoStart.IsEnabled)
+                {
+                    var enabled=autoStart.IsChecked==true;
+                    try { if(enabled||enabled!=originalAutoStart)startup.SetEnabled(enabled);originalAutoStart=enabled; }
+                    catch(Exception ex) { MessageBox.Show(this,"无法更新开机自启动设置："+ex.Message,"开机自启动");return; }
+                }
                 var handler=Saved;if(handler!=null)handler(draft.Copy());Native.Apply(this,root,draft);if(closeAfterSave)Close();
             };
             save.Click+=delegate { commit(true); };apply.Click+=delegate { commit(false); };

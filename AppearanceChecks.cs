@@ -9,6 +9,13 @@ using WindowsUsageWidget;
 
 class AppearanceChecks
 {
+    sealed class TestStartupRegistration : StartupRegistration
+    {
+        public bool Value=true;
+        public int Writes;
+        public override bool Enabled { get { return Value; } }
+        public override void SetEnabled(bool enabled) { Value=enabled;Writes++; }
+    }
     static List<string> checks=new List<string>();
     static void Require(bool value,string label) { if(!value)throw new Exception(label);checks.Add("PASS "+label); }
     static bool HasColor(Bitmap image,Color color) { for(var y=0;y<image.Height;y++)for(var x=0;x<image.Width;x++) { var pixel=image.GetPixel(x,y);if(pixel.A>0&&pixel.R==color.R&&pixel.G==color.G&&pixel.B==color.B)return true; }return false; }
@@ -180,12 +187,22 @@ class AppearanceChecks
             Require(ColorBounds(before,Color.FromArgb(255,51,102))==ColorBounds(after,Color.FromArgb(255,51,102))&&ColorBounds(before,Color.FromArgb(51,170,255))==ColorBounds(after,Color.FromArgb(51,170,255)),styleName+" quota graphics keep positions when labels and times change");
         }
         var app=new Application();app.Resources.MergedDictionaries.Add(Styles.Create());
-        var window=new SettingsWindow(new Preferences());Preferences saved=null;window.Saved+=delegate(Preferences p) { saved=p; };
+        var startup=new TestStartupRegistration();
+        var window=new SettingsWindow(new Preferences(),startup);Preferences saved=null;window.Saved+=delegate(Preferences p) { saved=p; };
         window.Loaded+=async delegate
         {
             try
             {
                 Require(Find<TextBlock>(window,"AppVersionLabel").Text==AppVersion.Display,"settings displays application version");
+                Require(StartupRegistration.CommandFor(@"C:\测试目录\Codex Widget.exe")=="\"C:\\测试目录\\Codex Widget.exe\"","startup command quotes executable paths with spaces and Chinese characters");
+                var autoStart=Find<CheckBox>(window,"StartWithWindows");
+                Require(autoStart.IsChecked==true&&startup.Writes==0,"startup switch reads system state without changing registration");
+                autoStart.IsChecked=false;Require(startup.Value&&startup.Writes==0,"changing startup checkbox waits for apply or save");
+                Find<Button>(window,"ApplySettings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Require(!startup.Value&&startup.Writes==1&&window.IsVisible,"apply disables startup and keeps settings open");
+                autoStart.IsChecked=true;Find<Button>(window,"ApplySettings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Require(startup.Value&&startup.Writes==2,"apply enables startup registration");
+                autoStart.IsChecked=false;Find<Button>(window,"ApplySettings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 for(var mode=0;mode<2;mode++)for(var preset=1;preset<SettingsWindow.PaletteNames.Length;preset++)
                 {
                     Find<RadioButton>(window,mode==0?"TaskbarPreviewLight":"TaskbarPreviewDark").IsChecked=true;Find<ComboBox>(window,"TaskbarPalette").SelectedIndex=preset;Find<Button>(window,"ApplySettings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

@@ -1,4 +1,4 @@
-﻿param([ValidatePattern('^$|^v[0-9]+\.[0-9]+\.[0-9]+$')][string]$Version = '')
+param([ValidatePattern('^$|^v[0-9]+\.[0-9]+\.[0-9]+$')][string]$Version = '')
 $ErrorActionPreference = 'Stop'
 $taskOutput = Join-Path $PSScriptRoot 'dist'
 $taskExe = Join-Path $taskOutput 'CodexUsageWidget-Windows.exe'
