@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Version matching AppVersion.cs, e.g. v3.0.0; empty means build only'
+        description: 'Version matching AppVersion.cs, e.g. v3.0.1; empty means build only'
         required: false
         default: ''
         type: string
